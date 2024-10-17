@@ -8,8 +8,8 @@ class HealthBar:
         self.yellow = (255, 255, 0)
         self.red = (255, 0, 0)
         self.black = (0, 0, 0)
-        self.player_health = 5
-        self.enemy_health = 5
+        self.player_health = 100
+        self.enemy_health = 100
 
     def message_to_screen(self, msg: str, color: Tuple[int, int, int], size: int, x: int, y: int) -> None:
         font = pygame.font.SysFont(None, size)

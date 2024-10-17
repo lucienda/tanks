@@ -43,8 +43,8 @@ class Menu:
             pygame.draw.rect(self.screen, active_color, button_rect)
             if click[0] == 1 and action:
                 if action == "play" or action == "play_again":
-                    self.health_bar.enemy_health = 10
-                    self.health_bar.player_health = 10
+                    self.health_bar.enemy_health = 100
+                    self.health_bar.player_health = 100
                     self.turn = True
                     self.shot = False
 
