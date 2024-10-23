@@ -32,14 +32,6 @@ class Tank:
 
     def move(self, dx: int) -> None:
         self.x += dx
-        self.update_turrets()
-
-    def update_turrets(self) -> None:
-        self.possible_turrets = [(self.x - 27, self.y - 2), (self.x - 26, self.y - 5),
-                                 (self.x - 25, self.y - 8), (self.x - 23, self.y - 12),
-                                 (self.x - 21, self.y - 14), (self.x - 20, self.y - 17),
-                                 (self.x - 18, self.y - 19), (self.x - 16, self.y - 21),
-                                 (self.x - 14, self.y - 23)]
         
     def change_turret(self, direction: str) -> None:
         if direction == "UP":
@@ -58,10 +50,11 @@ class PlayerTank(Tank):
                                  (self.x - 14, self.y - 23)]
 
     def draw(self) -> None:
-        super().draw()
+        super().draw()     
 
     def move(self, dx: int) -> None:
         super().move(dx)
+        self.update_turrets()
 
     def change_turret(self, direction: str) -> None:
         super().change_turret(direction)
@@ -82,7 +75,8 @@ class EnemyTank(Tank):
         if move_direction == "LEFT" and self.x - self.tank_width // 2 > 0:
             self.move(-5)
         elif move_direction == "RIGHT" and self.x + self.tank_width // 2 < self.screen.get_width():
-            self.move(5)
+            self.move(5)        
+        self.update_turrets()
 
     def change_turret(self) -> None:
         move_direction = random.choice(["UP", "DOWN", "STAY"])
