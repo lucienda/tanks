@@ -185,9 +185,11 @@ class Game:
         self.health_bar.player_health = 1
         self.health_bar.enemy_health = 1
         self.tank.x = self.screen.get_width() * 0.9
+        self.tank.update_turrets()
         self.tank.y = self.screen.get_height() * 0.9
         self.enemy_tank.x = self.screen.get_width() * 0.1
         self.enemy_tank.y = self.screen.get_height() * 0.9
+        self.enemy_tank.update_turrets()
         self.turn = True
         self.shot = False
         self.run_game()  
@@ -214,8 +216,9 @@ class Game:
                     self.turn = False
                     self.shot = False
             else:
-                self.enemy_tank.move()
-                self.enemy_tank.change_turret()
+                self.enemy_tank.move_randomly()
+                move_direction = random.choice(["UP", "DOWN"])
+                self.enemy_tank.change_turret(move_direction)
                 pygame.display.update()
                 self.view.render()
                 self.enemy_fire_shell()
