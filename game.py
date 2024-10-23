@@ -4,37 +4,37 @@ from typing import Tuple
 from barrier import Barrier
 from health import HealthBar
 from fireshell import Shell
+from tanks import Tank, EnemyTank
 
 class IView:
-    def __init__(self) -> None:
-        pass
-
-class IControl:
-    def __init__(self) -> None:
-        pass
-
-class Game:
-    def __init__(self, screen: pygame.Surface) -> None:
+    def __init__(self, screen, barrier=None, tank=None, enemy_tank=None, health_bar=None, colors=None, font=None, clock=None):
         self.screen = screen
-        self.font = pygame.font.Font('freesansbold.ttf', 100)
-        self.colors = {
+        self.barrier = barrier
+        self.tank = tank
+        self.enemy_tank = enemy_tank
+        self.health_bar = health_bar
+        self.colors = colors or {
             'white': (255, 255, 255),
             'black': (0, 0, 0),
             'red': (255, 0, 0),
             'green': (0, 255, 0),
             'bright_green': (0, 200, 0),
-            'bright_red': (200, 0, 0),
+            'bright_red': (200, 0, 0)
         }
-        self.clock = pygame.time.Clock()
-        self.screen_width = 800
-        self.screen_height = 600
-        self.barrier = None
-        self.tank = None
-        self.enemy_tank = None
-        self.health_bar = HealthBar(self.screen)
-        self.turn = True
-        self.shot = False
-        self.gun_power = 50
+        self.font = font or pygame.font.SysFont('freesansbold.ttf', 25)
+        self.clock = clock or pygame.time.Clock()
+
+    def render(self) -> None:
+        self.screen.fill(self.colors['white'])
+        if self.barrier:
+            self.barrier.draw()
+        if self.tank:
+            self.tank.draw()
+        if self.enemy_tank:
+            self.enemy_tank.draw()
+        if self.health_bar:
+            self.health_bar.draw()
+        pygame.display.flip()
 
     def message_to_screen(self, msg: str, color: Tuple[int, int, int], size: int, x: int, y: int) -> None:
         font = pygame.font.SysFont('freesansbold.ttf', size)
@@ -53,11 +53,9 @@ class Game:
                     self.health_bar.player_health = 100
                     self.turn = True
                     self.shot = False
-
                     self.run_game()
                 elif action == "quit":
                     pygame.quit()
-                    quit()
         else:
             pygame.draw.rect(self.screen, inactive_color, button_rect)
 
@@ -73,7 +71,7 @@ class Game:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    quit()
+
             self.screen.fill(self.colors['white'])
             text = self.font.render('Tank Wars', True, self.colors['black'], self.colors['white'])
             self.screen.blit(text, (120, 100))
@@ -88,23 +86,82 @@ class Game:
             pygame.display.update()
             self.clock.tick(5)
 
-    def create_tanks_and_barrier(self) -> None:
-        y = self.screen_height * 0.9
-        x = self.screen_height * 0.9
-        self.tank = PlayerTank(self.screen, x, y)
-        self.enemy_tank = EnemyTank(self.screen, self.screen_height - x, y)
-        self.barrier = Barrier(self.screen, 50)
+    def game_over(self) -> None:
+        game_over = True
+        while game_over:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+            self.screen.fill(self.colors['white'])
+            basicfont = pygame.font.Font('freesansbold.ttf', 100)
+            text = basicfont.render('Game Over!', True, (0, 0, 0), (255, 255, 255))
+            self.screen.blit(text, (120, 100))
+            self.message_to_screen("", self.colors['red'], 25, 80, 360)
+            self.button(200, self.colors['green'], self.colors['bright_green'], "play_again")
+            self.button_font('Play again', 250, 495)
+            self.button(500, self.colors['red'], self.colors['bright_red'], "quit")
+            self.button_font('Quit', 550, 495)
+            pygame.display.update()
+            self.clock.tick(5)
 
-    def render(self) -> None:
-        self.screen.fill((255, 255, 255)) 
-        if self.barrier:
-            self.barrier.draw()
-        if self.tank:
-            self.tank.draw()
-        if self.enemy_tank:
-            self.enemy_tank.draw()
-        self.health_bar.draw()
-        pygame.display.flip()
+class IControl:
+    def __init__(self, tank, barrier, screen_width):
+        self.tank = tank
+        self.barrier = barrier
+        self.screen_width = screen_width
+ 
+    def handle_tank_movement(self) -> None:
+        if self.tank.move_left and self.tank.x - self.tank.tank_width // 2 > 0:
+            if not (self.tank.x - self.tank.tank_width // 2 <= self.barrier.xlocation + self.barrier.barrier_width):
+                self.tank.move(-1)
+        
+        if self.tank.move_right and self.tank.x + self.tank.tank_width // 2 < self.screen_width:
+            if not (self.tank.x >= self.screen_width):
+                self.tank.move(1)
+
+    def handle_turret_rotation(self) -> None:
+        if self.tank.turret_up and self.tank.turret_position < len(self.tank.possible_turrets) - 1:
+            self.tank.change_turret("UP")
+        
+        if self.tank.turret_down and self.tank.turret_position > 0:
+            self.tank.change_turret("DOWN")
+
+    def handle_key_down(self, event) -> bool:
+        if event.key == pygame.K_LEFT:
+            self.tank.move_left = True
+        elif event.key == pygame.K_RIGHT:
+            self.tank.move_right = True
+        elif event.key == pygame.K_UP:
+            self.tank.turret_up = True
+        elif event.key == pygame.K_DOWN:
+            self.tank.turret_down = True
+        elif event.key == pygame.K_SPACE:
+            return True
+
+    def handle_key_up(self, event) -> None:
+        if event.key == pygame.K_LEFT:
+            self.tank.move_left = False
+        elif event.key == pygame.K_RIGHT:
+            self.tank.move_right = False
+        elif event.key == pygame.K_UP:
+            self.tank.turret_up = False
+        elif event.key == pygame.K_DOWN:
+            self.tank.turret_down = False
+
+class Game:
+    def __init__(self, screen: pygame.Surface, tank: Tank, enemy_tank: EnemyTank, barrier: Barrier, view: IView, control: IControl) -> None:
+        self.screen = screen
+        self.view = view
+        self.control = control
+        self.tank = tank
+        self.enemy_tank = enemy_tank
+        self.barrier = barrier
+        self.font = pygame.font.Font('freesansbold.ttf', 100)
+        self.clock = pygame.time.Clock()
+        self.health_bar = view.health_bar
+        self.turn = True
+        self.shot = False
+        self.gun_power = 50
 
     def fire_shell(self) -> None:
         shell = Shell(self.screen, (self.tank.x, self.tank.y), self.tank.x, self.tank.y,
@@ -122,84 +179,22 @@ class Game:
         self.health_bar.player_health -= damage
         print(f"Damage dealt: {damage}")
 
-    def handle_tank_movement(self) -> None:
-        if self.tank.move_left and self.tank.x - self.tank.tank_width // 2 > 0:
-            if not (self.tank.x - self.tank.tank_width // 2 <= self.barrier.xlocation + self.barrier.barrier_width):
-                self.tank.move(-1)
-        if self.tank.move_right and self.tank.x + self.tank.tank_width // 2 < self.screen_width:
-            if not (self.tank.x >= self.screen_width):
-                self.tank.move(1)
-
-    def handle_turret_rotation(self) -> None:
-        if self.tank.turret_up and self.tank.turret_position < len(self.tank.possible_turrets) - 1:
-            self.tank.change_turret("UP")
-        if self.tank.turret_down and self.tank.turret_position > 0:
-            self.tank.change_turret("DOWN") 
-
-    def handle_key_down(self, event) -> None:
-        if event.key == pygame.K_LEFT:
-            self.tank.move_left = True
-        elif event.key == pygame.K_RIGHT:
-            self.tank.move_right = True
-        elif event.key == pygame.K_UP:
-            self.tank.turret_up = True
-        elif event.key == pygame.K_DOWN:
-            self.tank.turret_down = True
-        elif event.key == pygame.K_SPACE:
-            self.fire_shell()
-            self.shot = True 
-
-    def handle_key_up(self, event) -> None:
-        if event.key == pygame.K_LEFT:
-            self.tank.move_left = False
-        elif event.key == pygame.K_RIGHT:
-            self.tank.move_right = False
-        elif event.key == pygame.K_UP:
-            self.tank.turret_up = False
-        elif event.key == pygame.K_DOWN:
-            self.tank.turret_down = False
-
-    def game_over(self) -> None:
-        game_over = True
-
-        while game_over:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    quit()
-            self.screen.fill(self.colors['white'])
-            basicfont = pygame.font.Font('freesansbold.ttf', 100)
-            text = basicfont.render('Game Over!', True, (0, 0, 0), (255, 255, 255))
-            self.screen.blit(text,(120,100))
-            self.message_to_screen("",self.colors['red'],25,80,360)
-
-            mouse = pygame.mouse.get_pos()
-
-            self.button(200, self.colors['green'], self.colors['bright_green'],"play_again")
-            self.button_font('Play again',250,495)
-
-            self.button(500,self.colors['red'],self.colors['bright_red'],"quit")
-            self.button_font('Quit',550,495)
-
-            pygame.display.update()
-            self.clock.tick(5)
-
     def run_game(self) -> None:
-        self.create_tanks_and_barrier()
         self.running = True
-
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    self.running = False
+                    pygame.quit()
                 elif event.type == pygame.KEYDOWN:
-                    self.handle_key_down(event)
+                    if (self.control.handle_key_down(event)):
+                        self.fire_shell() 
+                        self.shot = True
                 elif event.type == pygame.KEYUP:
-                    self.handle_key_up(event)
-
+                    self.control.handle_key_up(event)
+            
             if self.turn:
-                self.handle_tank_movement()
-                self.handle_turret_rotation()
+                self.control.handle_tank_movement()
+                self.control.handle_turret_rotation()
                 if self.shot:
                     self.turn = False
                     self.shot = False
@@ -207,14 +202,15 @@ class Game:
                 self.enemy_tank.move_randomly()
                 self.enemy_tank.change_turret()
                 pygame.display.update()
-                self.render()
+                self.view.render()
                 self.enemy_fire_shell()
-                self.turn = True  
+                self.turn = True
                 self.shot = False
-
-            self.render()
+            
+            self.view.render()
             self.clock.tick(60)
+
             if self.health_bar.enemy_health <= 0 or self.health_bar.player_health <= 0:
-                self.game_over()
+                self.view.game_over()
 
         pygame.quit()
