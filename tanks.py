@@ -70,14 +70,15 @@ class EnemyTank(Tank):
     def draw(self) -> None:
         super().draw()
 
-    def move_randomly(self) -> None:
-        move_direction = random.choice(["LEFT", "RIGHT", "STAY"])
+    def move(self) -> None:
+        
+        move_direction = random.choice(["LEFT", "RIGHT"])
         if move_direction == "LEFT" and self.x - self.tank_width // 2 > 0:
-            self.move(-5)
+            super().move(random.randint(-35, -20))
         elif move_direction == "RIGHT" and self.x + self.tank_width // 2 < self.screen.get_width():
-            self.move(5)        
+            super().move(random.randint(20, 35))        
         self.update_turrets()
 
     def change_turret(self) -> None:
-        move_direction = random.choice(["UP", "DOWN", "STAY"])
+        move_direction = random.choice(["UP", "DOWN"])
         super().change_turret(move_direction)

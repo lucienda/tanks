@@ -214,7 +214,7 @@ class Game:
                     self.turn = False
                     self.shot = False
             else:
-                self.enemy_tank.move_randomly()
+                self.enemy_tank.move()
                 self.enemy_tank.change_turret()
                 pygame.display.update()
                 self.view.render()
