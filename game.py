@@ -41,7 +41,7 @@ class IView:
         screen_text = font.render(msg, True, color)
         self.screen.blit(screen_text, (x, y))
 
-    def button(self, x: int, inactive_color: Tuple[int, int, int], active_color: Tuple[int, int, int], action: str = None) -> None:
+    def button(self, x: int, inactive_color: Tuple[int, int, int], active_color: Tuple[int, int, int], action: str = None) -> bool:
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
         button_rect = pygame.Rect(x, 470, 100, 50)
@@ -49,15 +49,14 @@ class IView:
             pygame.draw.rect(self.screen, active_color, button_rect)
             if click[0] == 1 and action:
                 if action == "play" or action == "play_again":
-                    self.health_bar.enemy_health = 100
-                    self.health_bar.player_health = 100
-                    self.turn = True
-                    self.shot = False
-                    self.run_game()
+                    return True 
                 elif action == "quit":
                     pygame.quit()
+                    return False
         else:
             pygame.draw.rect(self.screen, inactive_color, button_rect)
+        return False
+
 
     def button_font(self, value: str, button_width: int, button_height: int) -> None:
         small_text = pygame.font.Font('freesansbold.ttf', 20)
@@ -65,13 +64,12 @@ class IView:
         text_rect = text.get_rect(center=(button_width, button_height))
         self.screen.blit(text, text_rect)
 
-    def run(self) -> None:
+    def game_start(self) -> bool:
         intro = True
         while intro:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-
             self.screen.fill(self.colors['white'])
             text = self.font.render('Tank Wars', True, self.colors['black'], self.colors['white'])
             self.screen.blit(text, (120, 100))
@@ -79,14 +77,16 @@ class IView:
             self.message_to_screen("Press SPACE to shoot", self.colors['red'], 40, 150, 290)
             self.message_to_screen("Press Up or Down to move turret!", self.colors['red'], 40, 150, 320)
             self.message_to_screen("Press Left or Right to move tank!", self.colors['red'], 40, 150, 350)
-            self.button(200, self.colors['green'], self.colors['bright_green'], "play")
+            res = self.button(200, self.colors['green'], self.colors['bright_green'], "play")
+            if res:
+                return res
             self.button_font('GO!', 250, 495)
             self.button(500, self.colors['red'], self.colors['bright_red'], "quit")
             self.button_font('Quit', 550, 495)
             pygame.display.update()
             self.clock.tick(5)
-
-    def game_over(self) -> None:
+            
+    def game_over(self) -> bool:
         game_over = True
         while game_over:
             for event in pygame.event.get():
@@ -97,7 +97,9 @@ class IView:
             text = basicfont.render('Game Over!', True, (0, 0, 0), (255, 255, 255))
             self.screen.blit(text, (120, 100))
             self.message_to_screen("", self.colors['red'], 25, 80, 360)
-            self.button(200, self.colors['green'], self.colors['bright_green'], "play_again")
+            res = self.button(200, self.colors['green'], self.colors['bright_green'], "play_again")
+            if res:
+                return res
             self.button_font('Play again', 250, 495)
             self.button(500, self.colors['red'], self.colors['bright_red'], "quit")
             self.button_font('Quit', 550, 495)
@@ -109,7 +111,7 @@ class IControl:
         self.tank = tank
         self.barrier = barrier
         self.screen_width = screen_width
- 
+
     def handle_tank_movement(self) -> None:
         if self.tank.move_left and self.tank.x - self.tank.tank_width // 2 > 0:
             if not (self.tank.x - self.tank.tank_width // 2 <= self.barrier.xlocation + self.barrier.barrier_width):
@@ -179,8 +181,21 @@ class Game:
         self.health_bar.player_health -= damage
         print(f"Damage dealt: {damage}")
 
+    def reset_game(self) -> None:
+        self.health_bar.player_health = 1
+        self.health_bar.enemy_health = 1
+        self.tank.x = self.screen.get_width() * 0.9
+        self.tank.y = self.screen.get_height() * 0.9
+        self.enemy_tank.x = self.screen.get_width() * 0.1
+        self.enemy_tank.y = self.screen.get_height() * 0.9
+        self.turn = True
+        self.shot = False
+        self.run_game()  
+
     def run_game(self) -> None:
-        self.running = True
+
+        self.running = self.view.game_start()
+        
         while self.running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -211,6 +226,12 @@ class Game:
             self.clock.tick(60)
 
             if self.health_bar.enemy_health <= 0 or self.health_bar.player_health <= 0:
-                self.view.game_over()
+                res = self.view.game_over()
+                print("game",res)
+                if res:
+                    self.reset_game()
+                else:
+                    self.running = False
+
 
         pygame.quit()
