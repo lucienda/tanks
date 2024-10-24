@@ -89,7 +89,8 @@ class EnemyTank(Tank):
 
     def move_randomly(self) -> None:
         direction = self.random_generator(-20, 20)
-        self.move(direction)
+        if (self.x + direction >= 0):
+            self.move(direction)
 
     def draw(self) -> None:
         super().draw() 

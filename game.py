@@ -57,7 +57,6 @@ class IView:
             pygame.draw.rect(self.screen, inactive_color, button_rect)
         return False
 
-
     def button_font(self, value: str, button_width: int, button_height: int) -> None:
         small_text = pygame.font.Font('freesansbold.ttf', 20)
         text = small_text.render(value, True, self.colors['black'])

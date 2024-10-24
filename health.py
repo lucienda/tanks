@@ -23,7 +23,7 @@ class HealthBar:
         pygame.draw.rect(self.screen, player_health_color, (680, 25, self.player_health, 25))
         pygame.draw.rect(self.screen, enemy_health_color, (20, 25, self.enemy_health, 25))
 
-        self.message_to_screen(f"{self.player_health}%", self.black, 15, 710, 32)
+        self.view.message_to_screen(f"{self.player_health}%", self.black, 15, 710, 32)
         self.message_to_screen(f"{self.enemy_health}%", self.black, 15, 50, 32)
 
     def get_health_color(self, health: int) -> Tuple[int, int, int]:
