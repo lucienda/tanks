@@ -1,24 +1,21 @@
 import pygame
 import random
 from explosion import Explosion
+from barrier import Barrier
 from typing import List, Tuple
 
 class Shell:
     def __init__(self, screen: pygame.Surface, xy: Tuple[int, int], tankx: int, tanky: int, currentTurPos: int,
-                 gun_power: int, xlocation: int, barrier_width: int, randomHeight: int, targetX: int, targetY: int,
-                 ground_height: int, direction: str = "LEFT") -> None:
+                 gun_power: int, barrier: Barrier, targetX: int, targetY: int, direction: str) -> None:
         self.screen = screen
         self.xy = list(xy)
         self.tankx = tankx
         self.tanky = tanky
         self.currentTurPos = currentTurPos
         self.gun_power = gun_power
-        self.xlocation = xlocation
-        self.barrier_width = barrier_width
-        self.randomHeight = randomHeight
+        self.barrier = barrier
         self.targetX = targetX
         self.targetY = targetY
-        self.ground_height = ground_height
         self.startingShell = list(xy)
         self.direction = direction
 
@@ -45,9 +42,9 @@ class Shell:
                 explosion.explode()
                 fire = False
 
-            if self.startingShell[1] > self.screen.get_height() - self.ground_height:
-                hit_x = int((self.startingShell[0] * (self.screen.get_height() - self.ground_height)) / self.startingShell[1])
-                hit_y = self.screen.get_height() - self.ground_height
+            if self.startingShell[1] > self.screen.get_height() - self.barrier.ground_height:
+                hit_x = int((self.startingShell[0] * (self.screen.get_height() - self.barrier.ground_height)) / self.startingShell[1])
+                hit_y = self.screen.get_height() - self.barrier.ground_height
                 if self.targetX + 10 > hit_x > self.targetX - 10:
                     print("CRITICAL HIT")
                     damage = 25
@@ -64,10 +61,10 @@ class Shell:
                 explosion.explode()
                 fire = False
 
-            check_x_1 = self.startingShell[0] <= self.xlocation + self.barrier_width
-            check_x_2 = self.startingShell[0] >= self.xlocation
+            check_x_1 = self.startingShell[0] <= self.barrier.xlocation + self.barrier.barrier_width
+            check_x_2 = self.startingShell[0] >= self.barrier.xlocation
             check_y_1 = self.startingShell[1] <= self.screen.get_height()
-            check_y_2 = self.startingShell[1] >= self.screen.get_height() - self.randomHeight - self.ground_height
+            check_y_2 = self.startingShell[1] >= self.screen.get_height() - self.barrier.random_height - self.barrier.ground_height
             if check_x_1 and check_x_2 and check_y_1 and check_y_2:
                 hit_x = self.startingShell[0]
                 hit_y = self.startingShell[1]

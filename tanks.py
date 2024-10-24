@@ -77,18 +77,16 @@ class PlayerTank(Tank):
                                  (self.x - 14, self.y - 23)]
 
 class EnemyTank(Tank):
-    def __init__(self, screen: pygame.Surface, x: int, y: int, random_generator=random.randint):
+    def __init__(self, screen: pygame.Surface, x: int, y: int):
         super().__init__(screen, x, y)
-        self.color = (255, 0, 0)
         self.possible_turrets = [(self.x + 27, self.y - 2), (self.x + 26, self.y - 5),
                     (self.x + 25, self.y - 8), (self.x + 23, self.y - 12),
                     (self.x + 21, self.y - 14), (self.x + 20, self.y - 17),
                     (self.x + 18, self.y - 19), (self.x + 16, self.y - 21),
                     (self.x + 14, self.y - 23)]
-        self.random_generator = random_generator
 
     def move_randomly(self) -> None:
-        direction = self.random_generator(-20, 20)
+        direction = random.randint(-20, 20)
         if (self.x + direction >= 0):
             self.move(direction)
 

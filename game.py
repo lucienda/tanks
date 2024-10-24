@@ -166,16 +166,14 @@ class Game:
 
     def fire_shell(self) -> None:
         shell = Shell(self.screen, (self.tank.x, self.tank.y), self.tank.x, self.tank.y,
-                    self.tank.turret_position, self.gun_power, self.barrier.xlocation, self.barrier.barrier_width,
-                    self.barrier.random_height, self.enemy_tank.x, self.enemy_tank.y, self.barrier.ground_height, direction="LEFT")
+                    self.tank.turret_position, self.gun_power,self.barrier, self.enemy_tank.x, self.enemy_tank.y, direction="LEFT")
         damage = shell.fire()
         self.health_bar.enemy_health -= damage
         print(f"Damage dealt: {damage}")
 
     def enemy_fire_shell(self) -> None:
         enemy_shell = Shell(self.screen, (self.enemy_tank.x, self.enemy_tank.y), self.enemy_tank.x, self.enemy_tank.y,
-                            self.enemy_tank.turret_position, self.gun_power, self.barrier.xlocation, self.barrier.barrier_width,
-                            self.barrier.random_height, self.tank.x, self.tank.y, self.barrier.ground_height, direction="RIGHT")
+                            self.enemy_tank.turret_position, self.gun_power, self.barrier, self.tank.x, self.tank.y,  direction="RIGHT")
         damage = enemy_shell.fire()
         self.health_bar.player_health -= damage
         print(f"Damage dealt: {damage}")

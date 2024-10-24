@@ -14,7 +14,7 @@ def main():
     y = screen_height * 0.9
     x = screen_width * 0.9
 
-    barrier = Barrier(screen, 35)
+    barrier = Barrier(screen)
     health_bar = HealthBar(screen)
     tank = PlayerTank(screen, x, y)
     enemy_tank = EnemyTank(screen, screen_width - x, y)
