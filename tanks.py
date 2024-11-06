@@ -1,10 +1,79 @@
-import pygame
+from abc import ABC, abstractmethod
 import random
-from typing import List, Tuple
+from control import IControl
+from iview import IView
 
-class Tank:
-    def __init__(self, screen: pygame.Surface, x: int, y: int) -> None:
-        self.screen = screen
+class IPlayer(ABC):
+    @abstractmethod
+    def move(self, mas):
+        pass
+
+    @abstractmethod
+    def change_turret(self, direction: int):
+        pass
+
+    @abstractmethod
+    def reset_position(self, x: int, y: int):
+        pass
+
+    @abstractmethod
+    def update_turrets(self):
+        pass
+
+    @abstractmethod
+    def draw(self):
+        pass
+
+class PlayerTank(IPlayer):
+    def __init__(self, x: int, y: int, control: IControl, view: IView) -> None:
+        self.x = x
+        self.y = y
+        self.control = control
+        self.color = (0, 0, 0)
+        self.tank_width = 40
+        self.tank_height = 20
+        self.turret_width = 5
+        self.wheel_width = 5
+        self.turret_position = 7 
+        self.possible_turrets = self.calculate_possible_turrets()
+        self.view = view
+
+    def move(self, mas) -> None:
+        if (mas == [0,0,False]):
+            mas = self.control.handle_keys(mas)  
+             
+        self.x += mas[0]
+        self.change_turret(mas[1])
+        
+    def change_turret(self, dy: int) -> None:
+        self.turret_position += dy
+        self.turret_position = max(0, min(self.turret_position, len(self.possible_turrets) - 1))
+        self.update_turrets()
+
+    def reset_position(self, x: int, y: int):
+        self.x = x
+        self.y = y
+        self.turret_position = 7
+        self.update_turrets()
+        self.control.reset_keys()
+
+    def update_turrets(self) -> None:
+        self.possible_turrets = self.calculate_possible_turrets()
+
+    def calculate_possible_turrets(self):
+        return [
+            (self.x - 27, self.y - 2), (self.x - 26, self.y - 5),
+            (self.x - 25, self.y - 8), (self.x - 23, self.y - 12),
+            (self.x - 21, self.y - 14), (self.x - 20, self.y - 17),
+            (self.x - 18, self.y - 19), (self.x - 16, self.y - 21),
+            (self.x - 14, self.y - 23)
+        ]
+    
+    def draw(self):
+        self.view.draw_tank(self)
+
+class EnemyTank(IPlayer):
+    def __init__(self, x: int, y: int, view: IView) -> None:
         self.x = x
         self.y = y
         self.color = (0, 0, 0)
@@ -12,96 +81,39 @@ class Tank:
         self.tank_height = 20
         self.turret_width = 5
         self.wheel_width = 5
-        self.turret_position = 7
-        self.move_left = False
-        self.move_right = False
-        self.turret_up = False
-        self.turret_down = False
-        self.possible_turrets = [(self.x - 27, self.y - 2), (self.x - 26, self.y - 5),
-                                 (self.x - 25, self.y - 8), (self.x - 23, self.y - 12),
-                                 (self.x - 21, self.y - 14), (self.x - 20, self.y - 17),
-                                 (self.x - 18, self.y - 19), (self.x - 16, self.y - 21),
-                                 (self.x - 14, self.y - 23)]
+        self.turret_position = 7 
+        self.possible_turrets = self.calculate_possible_turrets()
+        self.view = view
 
-    def draw(self) -> None:
-        turret = self.possible_turrets[self.turret_position]
-        pygame.draw.circle(self.screen, self.color, (self.x, self.y), self.tank_height // 2)
-        pygame.draw.rect(self.screen, self.color, (self.x - self.tank_height, self.y, self.tank_width, self.tank_height))
-        pygame.draw.line(self.screen, self.color, (self.x, self.y), turret, self.turret_width)
-        wheels = [(self.x, self.y + 23), (self.x + 5, self.y + 23), (self.x - 5, self.y + 23),
-                  (self.x + 10, self.y + 23), (self.x - 10, self.y + 23), (self.x + 15, self.y + 23),
-                  (self.x - 15, self.y + 23)]
-        for wheel in wheels:
-            pygame.draw.circle(self.screen, self.color, wheel, self.wheel_width)
+    def move(self) -> None:
+        direction = random.randint(-20, 20)
+        if self.x + direction >= 0:
 
-    def move(self, dx: int) -> None:
-        self.x += dx
+            self.x += direction
+            self.change_turret()
+
+    def change_turret(self) -> None:
+        #self.turret_position += dy
+        self.turret_position = random.randint(0, len(self.possible_turrets) - 1)
         self.update_turrets()
 
-    def change_turret(self, direction: str) -> None:
-        if direction == "UP":
-            if self.turret_position < len(self.possible_turrets) - 1:
-                self.turret_position += 1
-        elif direction == "DOWN":
-            if self.turret_position > 0:
-                self.turret_position -= 1
+    def reset_position(self, x: int, y: int):
+        self.x = x
+        self.y = y
+        self.turret_position = 7
+        self.update_turrets()
 
     def update_turrets(self) -> None:
-        for i in range(len(self.possible_turrets)):
-            self.possible_turrets[i] = (self.possible_turrets[i][0] + self.x - self.tank_width // 2,
-                                        self.possible_turrets[i][1])
+        self.possible_turrets = self.calculate_possible_turrets()
 
-class PlayerTank(Tank):
-    def __init__(self, screen: pygame.Surface, x: int, y: int) -> None:
-            super().__init__(screen, x, y)
-            self.possible_turrets = [(self.x - 27, self.y - 2), (self.x - 26, self.y - 5),
-                                 (self.x - 25, self.y - 8), (self.x - 23, self.y - 12),
-                                 (self.x - 21, self.y - 14), (self.x - 20, self.y - 17),
-                                 (self.x - 18, self.y - 19), (self.x - 16, self.y - 21),
-                                 (self.x - 14, self.y - 23)]
+    def calculate_possible_turrets(self):
+        return [
+            (self.x + 27, self.y - 2), (self.x + 26, self.y - 5),
+            (self.x + 25, self.y - 8), (self.x + 23, self.y - 12),
+            (self.x + 21, self.y - 14), (self.x + 20, self.y - 17),
+            (self.x + 18, self.y - 19), (self.x + 16, self.y - 21),
+            (self.x + 14, self.y - 23)
+        ]
 
-    def draw(self) -> None:
-        super().draw() 
-
-    def move(self, dx: int) -> None:
-        super().move(dx)
-
-    def change_turret(self, direction: str) -> None:
-        super().change_turret(direction)
-
-    def update_turrets(self) -> None:
-        self.possible_turrets = [(self.x - 27, self.y - 2), (self.x - 26, self.y - 5),
-                                 (self.x - 25, self.y - 8), (self.x - 23, self.y - 12),
-                                 (self.x - 21, self.y - 14), (self.x - 20, self.y - 17),
-                                 (self.x - 18, self.y - 19), (self.x - 16, self.y - 21),
-                                 (self.x - 14, self.y - 23)]
-
-class EnemyTank(Tank):
-    def __init__(self, screen: pygame.Surface, x: int, y: int):
-        super().__init__(screen, x, y)
-        self.possible_turrets = [(self.x + 27, self.y - 2), (self.x + 26, self.y - 5),
-                    (self.x + 25, self.y - 8), (self.x + 23, self.y - 12),
-                    (self.x + 21, self.y - 14), (self.x + 20, self.y - 17),
-                    (self.x + 18, self.y - 19), (self.x + 16, self.y - 21),
-                    (self.x + 14, self.y - 23)]
-
-    def move_randomly(self) -> None:
-        direction = random.randint(-20, 20)
-        if (self.x + direction >= 0):
-            self.move(direction)
-
-    def draw(self) -> None:
-        super().draw() 
-
-    def move(self, dx: int) -> None:
-        super().move(dx)
-
-    def change_turret(self, direction: str) -> None:
-        super().change_turret(direction)
-
-    def update_turrets(self) -> None:
-        self.possible_turrets = [(self.x + 27, self.y - 2), (self.x + 26, self.y - 5),
-                                 (self.x + 25, self.y - 8), (self.x + 23, self.y - 12),
-                                 (self.x + 21, self.y - 14), (self.x + 20, self.y - 17),
-                                 (self.x + 18, self.y - 19), (self.x + 16, self.y - 21),
-                                 (self.x + 14, self.y - 23)]
+    def draw(self):
+        self.view.draw_tank(self)
